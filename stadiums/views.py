@@ -14,8 +14,8 @@ class AddStadiumView(APIView):
     def post(self, request: Request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        stadium = serializer.save()
+        serializer.save()
         return Response(
-            data=self.serializer_class(stadium).data,
+            data=serializer.data,
             status=status.HTTP_201_CREATED,
         )
