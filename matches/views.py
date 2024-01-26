@@ -8,34 +8,50 @@ from matches.models import Match
 from matches.serializers import MatchSerializer, SeatSerializer
 
 
-class AddMatchView(APIView):
+class BaseMatchView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
+    serializer_class = None
+    model_class = None
+
+    def _get_object_or_404(self, pk: int, error: str):
+        try:
+            object = self.model_class.objects.get(pk=pk)
+        except Match.DoesNotExist:
+            return None, Response(
+                {"error": error},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return object, None
+
+    def _create_response(self, data: dict, status_code: int):
+        return Response(data=data, status=status_code)
+
+
+class AddMatchView(BaseMatchView):
     serializer_class = MatchSerializer
+    model_class = Match
 
     def post(self, request: Request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         match = serializer.save()
-        return Response(
+        return self._create_response(
             data=self.serializer_class(match).data,
-            status=status.HTTP_201_CREATED,
+            status_code=status.HTTP_201_CREATED,
         )
 
 
-class AddMatchSeatsView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+class AddMatchSeatsView(BaseMatchView):
     serializer_class = SeatSerializer
+    model_class = Match
 
     def post(self, request: Request, match_id: int):
-        try:
-            match = Match.objects.get(pk=match_id)
-        except Match.DoesNotExist:
-            return Response(
-                {"error": "Match not found"}, status=status.HTTP_404_NOT_FOUND
-            )
+        match, response = self._get_object_or_404(pk=match_id, error="Match not found")
+        if response:
+            return response
 
-        seats_data = request.data.get("seats", [])
-
+        seats_data: list[dict[str, int]] = request.data.get("seats", [])
         for seat_data in seats_data:
             seat_data["match"] = match.id
 
@@ -44,7 +60,7 @@ class AddMatchSeatsView(APIView):
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(
-            {"message": "Seats created successfully"},
-            status=status.HTTP_201_CREATED,
+        return self._create_response(
+            data={"message": "Seats created successfully"},
+            status_code=status.HTTP_201_CREATED,
         )
