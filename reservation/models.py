@@ -13,4 +13,4 @@ class Reservation(models.Model):
         verbose_name_plural = "reservations"
 
     def __str__(self):
-        return f"{self.user}:{self.match}:{self.seat}"
+        return f"{self.user.username}:{self.match}:{self.seat}"

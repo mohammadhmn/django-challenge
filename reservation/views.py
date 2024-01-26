@@ -1,12 +1,18 @@
 from django.db import IntegrityError, transaction
-from rest_framework import status
+from rest_framework import serializers, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from matches import facade as matches_facade
 from matches.models import Match, Seat
 from reservation.models import Reservation
+
+
+class ReserveSeatSerializer(serializers.Serializer):
+    match = serializers.IntegerField()
+    seat = serializers.IntegerField()
 
 
 class ReserveSeatView(APIView):
@@ -14,38 +20,27 @@ class ReserveSeatView(APIView):
 
     @transaction.atomic
     def post(self, request: Request):
+        serializer = ReserveSeatSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         user = request.user
-        match_id = request.data.get("match")
-        seat_id = request.data.get("seat")
 
-        match = Match.objects.filter(id=match_id).first()
-        if not match:
-            return Response(
-                {"error": "Match not found"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        match, response = self._get_match_or_error(serializer.validated_data["match"])
+        if response:
+            return response
 
-        seat = Seat.objects.filter(id=seat_id, is_reserved=False).first()
-        if not seat:
-            return Response(
-                {"error": "Seat is reserved or not available"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        seat, response = self._get_seat_or_error(serializer.validated_data["seat"])
+        if response:
+            return response
 
-        Reservation.objects.create(
-            user=user,
-            match=match,
-            seat=seat,
-        )
+        reservation = Reservation.objects.create(user=user, match=match, seat=seat)
 
         try:
-            Seat.objects.filter(
+            matches_facade.safe_reserve_seat_by_id(
                 id=seat.id,
                 updated_at=seat.updated_at,
-            ).update(
-                is_reserved=True,
             )
         except IntegrityError:
+            reservation.delete()
             return Response(
                 {"error": "Concurrent update detected. Please try again."},
                 status=status.HTTP_409_CONFLICT,
@@ -55,3 +50,24 @@ class ReserveSeatView(APIView):
             {"message": "Successfully reserved the seat"},
             status=status.HTTP_201_CREATED,
         )
+
+    def _get_match_or_error(
+        self, match_id: int
+    ) -> tuple[Match | None, Response | None]:
+        match = matches_facade.get_match_by_id(match_id)
+        if not match:
+            return None, Response(
+                {"error": "Match not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return match, None
+
+    def _get_seat_or_error(self, seat_id: int) -> tuple[Seat | None, Response | None]:
+        seat = matches_facade.get_unreserved_seat_by_id(seat_id)
+        if not seat:
+            return None, Response(
+                {"error": "Seat is reserved or not available"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return seat, None
