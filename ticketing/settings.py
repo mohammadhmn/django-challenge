@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     # First-Party
     "authentication",
     "stadiums",
+    "matches",
 ]
 
 MIDDLEWARE = [
