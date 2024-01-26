@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "authentication",
     "stadiums",
     "matches",
+    "reservation",
 ]
 
 MIDDLEWARE = [
