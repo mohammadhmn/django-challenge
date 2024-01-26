@@ -14,15 +14,14 @@ class Match(models.Model):
         unique_together = ["stadium", "match_day", "match_time"]
 
     def __str__(self):
-        return (
-            f"{self.home_side} vs {self.away_side} on {self.datetime} at {self.stadium}"
-        )
+        return f"{self.home_side} vs {self.away_side} on {self.match_day}:{self.match_time} at {self.stadium}"
 
 
 class Seat(models.Model):
     match = models.ForeignKey(Match, on_delete=models.CASCADE)
     seat_number = models.IntegerField()
     is_reserved = models.BooleanField(default=False, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, auto_now_add=False)
 
     class Meta:
         verbose_name = "seat"
