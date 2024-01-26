@@ -22,7 +22,7 @@ class Match(models.Model):
 class Seat(models.Model):
     match = models.ForeignKey(Match, on_delete=models.CASCADE)
     seat_number = models.IntegerField()
-    is_reserved = models.BooleanField(default=False)
+    is_reserved = models.BooleanField(default=False, blank=True)
 
     class Meta:
         verbose_name = "seat"
