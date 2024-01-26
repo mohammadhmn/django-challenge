@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     # First-Party
     "authentication",
+    "stadiums",
 ]
 
 MIDDLEWARE = [
