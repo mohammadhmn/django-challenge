@@ -1,5 +1,5 @@
 from django.db import IntegrityError, transaction
-from rest_framework import serializers, status
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -8,11 +8,7 @@ from rest_framework.views import APIView
 from matches import facade as matches_facade
 from matches.models import Match, Seat
 from reservation.models import Reservation
-
-
-class ReserveSeatSerializer(serializers.Serializer):
-    match = serializers.IntegerField()
-    seat = serializers.IntegerField()
+from reservation.serializers import ReserveSeatSerializer
 
 
 class ReserveSeatView(APIView):
