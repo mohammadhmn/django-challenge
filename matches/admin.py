@@ -1,3 +1,6 @@
 from django.contrib import admin
 
-# Register your models here.
+from matches.models import Match, Seat
+
+admin.site.register(Match)
+admin.site.register(Seat)
