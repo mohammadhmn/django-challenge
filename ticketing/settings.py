@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     # Third-Party
     "rest_framework",
     "rest_framework.authtoken",
+    "drf_yasg",
     # First-Party
     "authentication",
     "stadiums",
@@ -129,3 +130,13 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+SWAGGER_SETTINGS = {
+    "USE_SESSION_AUTH": False,
+    "PERSIST_AUTH": True,
+    "api_version": "1.0",
+    "enabled_methods": ["get", "post", "put", "patch", "delete"],
+    "SECURITY_DEFINITIONS": {
+        "Basic": {"type": "basic"},
+    },
+}
